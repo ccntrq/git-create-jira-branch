@@ -59,6 +59,7 @@ const runGitCommand =
           }),
         ),
       ),
+      Effect.scoped,
     );
 
 const listBranches =
@@ -76,6 +77,7 @@ const listBranches =
             .map((x) => x.replace(/^\*\s+/, '')),
         ),
       ),
+      Effect.scoped,
     );
 
 const createGitBranchFrom =
@@ -92,6 +94,7 @@ const createGitBranchFrom =
       ),
       runGitCommand(commandExecutor),
       Effect.flatMap(() => Effect.unit),
+      Effect.scoped,
     );
 
 const createGitBranch =
@@ -101,6 +104,7 @@ const createGitBranch =
       Command.make('git', 'checkout', reset ? '-B' : '-b', branchName),
       runGitCommand(commandExecutor),
       Effect.flatMap(() => Effect.unit),
+      Effect.scoped,
     );
 
 const switchBranch =
@@ -110,6 +114,7 @@ const switchBranch =
       Command.make('git', 'checkout', branchName),
       runGitCommand(commandExecutor),
       Effect.flatMap(() => Effect.unit),
+      Effect.scoped,
     );
 
 export const GitClientLive = Layer.effect(

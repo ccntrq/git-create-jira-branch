@@ -8,15 +8,19 @@ import {JiraApiError, JiraIssue} from '../src/types';
 import {describe, expect} from 'vitest';
 import {itEffect} from './util';
 
-const environmentTest = Layer.setConfigProvider(
-  ConfigProvider.fromMap(
-    new Map([
-      ['JIRA_PAT', 'dummy-jira-pat'],
-      ['JIRA_API_URL', 'https://dummy-jira-instance.com'],
-      ['JIRA_KEY_PREFIX', 'DUMMYAPP'],
-    ]),
+const environmentTest = EnvironmentLive.pipe(
+  Layer.provide(
+    Layer.setConfigProvider(
+      ConfigProvider.fromMap(
+        new Map([
+          ['JIRA_PAT', 'dummy-jira-pat'],
+          ['JIRA_API_URL', 'https://dummy-jira-instance.com'],
+          ['JIRA_KEY_PREFIX', 'DUMMYAPP'],
+        ]),
+      ),
+    ),
   ),
-).pipe(Layer.provide(EnvironmentLive));
+);
 
 const mkHttpMock = (
   response: Response,
@@ -38,7 +42,7 @@ const mkTestLayer = (
   const baseTestLayer = Layer.merge(environmentTest, mkHttpMock(response));
   return Layer.merge(
     baseTestLayer,
-    baseTestLayer.pipe(Layer.provide(JiraClientLive)),
+    JiraClientLive.pipe(Layer.provide(baseTestLayer)),
   );
 };
 

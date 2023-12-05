@@ -12,7 +12,7 @@ const testProg = Effect.all([Environment]).pipe(
 const mkTestLayer = (
   configProvider: ConfigProvider.ConfigProvider,
 ): Layer.Layer<never, never, Environment> =>
-  Layer.setConfigProvider(configProvider).pipe(Layer.provide(EnvironmentLive));
+  EnvironmentLive.pipe(Layer.provide(Layer.setConfigProvider(configProvider)));
 
 describe('Environment', () => {
   itEffect('should provide environment', () =>
@@ -45,11 +45,10 @@ describe('Environment', () => {
           ['JIRA_API_URL', 'https://dummy-jira-instance.com'],
         ]),
       );
-      const environmentTest = Layer.setConfigProvider(configProvider).pipe(
-        Layer.provide(EnvironmentLive),
-      );
 
-      const env = yield* $(Effect.provide(testProg, environmentTest));
+      const env = yield* $(
+        Effect.provide(testProg, mkTestLayer(configProvider)),
+      );
 
       expect(env).toEqual({
         defaultJiraKeyPrefix: Option.none(),
@@ -64,12 +63,9 @@ describe('Environment', () => {
       const configProvider = ConfigProvider.fromMap(
         new Map([['JIRA_API_URL', 'https://dummy-jira-instance.com']]),
       );
-      const environmentTest = Layer.setConfigProvider(configProvider).pipe(
-        Layer.provide(EnvironmentLive),
-      );
 
       const result = yield* $(
-        Effect.provide(Effect.either(testProg), environmentTest),
+        Effect.either(Effect.provide(testProg, mkTestLayer(configProvider))),
       );
       Either.match(result, {
         onLeft: (e) =>
@@ -86,12 +82,9 @@ describe('Environment', () => {
   itEffect('should report multiple missing configuration values', () =>
     Effect.gen(function* ($) {
       const configProvider = ConfigProvider.fromMap(new Map());
-      const environmentTest = Layer.setConfigProvider(configProvider).pipe(
-        Layer.provide(EnvironmentLive),
-      );
 
       const result = yield* $(
-        Effect.provide(Effect.either(testProg), environmentTest),
+        Effect.either(Effect.provide(testProg, mkTestLayer(configProvider))),
       );
 
       Either.match(result, {

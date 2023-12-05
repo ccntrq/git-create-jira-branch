@@ -1,6 +1,5 @@
 import {Effect, pipe, Option} from 'effect';
 import {Effect as EffectNs} from 'effect/Effect';
-import {log} from 'effect/Console';
 
 import {cliEffect} from '../src/cli';
 import {gitCreateJiraBranch} from '../src/core';
@@ -8,11 +7,9 @@ import {gitCreateJiraBranch} from '../src/core';
 import {vi, describe, afterEach, expect, Mock} from 'vitest';
 import {itEffect, toEffectMock} from './util';
 import {CreatedBranch, ResetBranch, SwitchedBranch} from '../src/types';
-import {testLayer} from './mock-implementations';
+import {cliTestLayer, mockLogger} from './mock-implementations';
 
 vi.mock('../src/core');
-
-vi.mock('effect/Console');
 
 const mockGitCreateJiraBranch = toEffectMock(
   gitCreateJiraBranch as unknown as Mock<
@@ -24,15 +21,10 @@ const mockGitCreateJiraBranch = toEffectMock(
     >
   >,
 );
-const mockLog = toEffectMock(
-  log as Mock<Parameters<typeof log>, ReturnType<typeof log>>,
-);
-
 describe('cli', () => {
   describe('cliEffect', () => {
     afterEach(() => {
       vi.clearAllMocks();
-      mockLog.mockSuccessValue(undefined);
     });
 
     itEffect('should create branch with single argument', () =>
@@ -40,14 +32,13 @@ describe('cli', () => {
         mockGitCreateJiraBranch.mockSuccessValue(
           CreatedBranch('feat/FOOX-1234-description'),
         );
-        mockLog.mockSuccessValue(undefined);
         yield* $(
           Effect.provide(
             pipe(
               Effect.sync(() => ['FOOX-1234']),
               Effect.flatMap(cliEffect),
             ),
-            testLayer,
+            cliTestLayer,
           ),
         );
 
@@ -56,7 +47,7 @@ describe('cli', () => {
           Option.none(),
           false,
         );
-        expect(mockLog.mock.calls).toMatchSnapshot();
+        expect(mockLogger.mock.calls).toMatchSnapshot();
       }),
     );
 
@@ -65,14 +56,13 @@ describe('cli', () => {
         mockGitCreateJiraBranch.mockSuccessValue(
           SwitchedBranch('feat/FOOX-1234-description'),
         );
-        mockLog.mockSuccessValue(undefined);
         yield* $(
           Effect.provide(
             pipe(
               Effect.sync(() => ['FOOX-1234']),
               Effect.flatMap(cliEffect),
             ),
-            testLayer,
+            cliTestLayer,
           ),
         );
 
@@ -81,7 +71,7 @@ describe('cli', () => {
           Option.none(),
           false,
         );
-        expect(mockLog.mock.calls).toMatchSnapshot();
+        expect(mockLogger.mock.calls).toMatchSnapshot();
       }),
     );
 
@@ -96,7 +86,7 @@ describe('cli', () => {
               Effect.sync(() => ['FOOX-1234', '-b', 'master']),
               Effect.flatMap(cliEffect),
             ),
-            testLayer,
+            cliTestLayer,
           ),
         );
 
@@ -105,7 +95,7 @@ describe('cli', () => {
           Option.some('master'),
           false,
         );
-        expect(mockLog.mock.calls).toMatchSnapshot();
+        expect(mockLogger.mock.calls).toMatchSnapshot();
       }),
     );
 
@@ -120,7 +110,7 @@ describe('cli', () => {
               Effect.sync(() => ['FOOX-1234', '-r']),
               Effect.flatMap(cliEffect),
             ),
-            testLayer,
+            cliTestLayer,
           ),
         );
 
@@ -129,7 +119,7 @@ describe('cli', () => {
           Option.none(),
           true,
         );
-        expect(mockLog.mock.calls).toMatchSnapshot();
+        expect(mockLogger.mock.calls).toMatchSnapshot();
       }),
     );
 
@@ -141,12 +131,12 @@ describe('cli', () => {
               Effect.sync(() => []),
               Effect.flatMap(cliEffect),
             ),
-            testLayer,
+            cliTestLayer,
           ),
         );
 
         expect(mockGitCreateJiraBranch).not.toHaveBeenCalled();
-        expect(mockLog.mock.calls).toMatchSnapshot();
+        expect(mockLogger.mock.calls).toMatchSnapshot();
       }),
     );
 
@@ -158,12 +148,12 @@ describe('cli', () => {
               Effect.sync(() => ['--version']),
               Effect.flatMap(cliEffect),
             ),
-            testLayer,
+            cliTestLayer,
           ),
         );
 
         expect(mockGitCreateJiraBranch).not.toHaveBeenCalled();
-        expect(mockLog.mock.calls[0]?.[0]).toMatch(
+        expect(mockLogger.mock.calls[0]?.[0]).toMatch(
           /git-create-jira-branch v\d+\.\d+\.\d+/,
         );
       }),
@@ -177,13 +167,13 @@ describe('cli', () => {
               Effect.sync(() => ['--help']),
               Effect.flatMap(cliEffect),
             ),
-            testLayer,
+            cliTestLayer,
           ),
         );
 
         expect(mockGitCreateJiraBranch).not.toHaveBeenCalled();
         expect(
-          (mockLog.mock.calls[0]?.[0] as string)
+          (mockLogger.mock.calls[0]?.[0] as string)
             .split(/\n/)
             .slice(3)
             .join('\n'),

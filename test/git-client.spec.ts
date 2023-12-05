@@ -48,7 +48,7 @@ describe('GitClient', () => {
       CommandExecutor.makeExecutor(executorMock),
     );
 
-    testLayer = testExecutor.pipe(Layer.provide(GitClientLive));
+    testLayer = GitClientLive.pipe(Layer.provide(testExecutor));
   });
 
   afterEach(() => {
