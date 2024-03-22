@@ -106,6 +106,20 @@ export const ticketInfo = (jiraKey: string) =>
     return issue;
   });
 
+export const getAssociatedBranches = (): Effect.Effect<
+  Chunk.Chunk<GitBranch>,
+  GitExecError,
+  GitClient
+> =>
+  GitClient.pipe(
+    Effect.flatMap((_) => _.listBranches()),
+    Effect.map((branches) =>
+      Chunk.filter(branches, (branch) =>
+        Option.isSome(extractJiraKey(branch.name)),
+      ),
+    ),
+  );
+
 const fullKey = (
   jiraKey: string,
 ): Effect.Effect<string, AppConfigError, AppConfigService> =>
