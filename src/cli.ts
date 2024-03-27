@@ -6,12 +6,13 @@ import * as HelpDoc from '@effect/cli/HelpDoc';
 import * as Span from '@effect/cli/HelpDoc/Span';
 import * as Options from '@effect/cli/Options';
 import type * as CommandExecutor from '@effect/platform/CommandExecutor';
-import {Console, Effect, Option, pipe} from 'effect';
-import {compose, constant} from 'effect/Function';
+import {Chunk, Console, Effect, Option, pipe} from 'effect';
+import {compose, constant, flow} from 'effect/Function';
 
 import * as packageJson from '../package.json';
 import type {AppConfigService} from './app-config';
 import {
+  getAssociatedBranches,
   gitCreateJiraBranch,
   ticketInfo,
   ticketInfoForCurrentBranch,
@@ -23,6 +24,10 @@ import {formatIssue} from './issue-formatter';
 import type {JiraClient} from './jira-client';
 import {matchGitCreateJiraBranchResult} from './types';
 import {openUrl} from './url-opener';
+import {Doc} from '@effect/printer';
+import {render} from '@effect/printer-ansi/AnsiDoc';
+import {green} from '@effect/printer-ansi/Ansi';
+import {formatBranches} from './branch-formatter';
 
 // for version and help
 const gitJiraBranch = pipe(Command.make('git-jira-branch', {}));
@@ -127,8 +132,27 @@ current branch.`,
   ),
 );
 
+const listCommand = pipe(
+  Command.make('list', {}, () =>
+    pipe(
+      getAssociatedBranches(),
+      Effect.map(formatBranches),
+      Effect.flatMap(Console.log),
+    ),
+  ),
+  Command.withDescription(
+    `
+Lists all branches that appear to be associated with a Jira ticket.`,
+  ),
+);
+
 const mainCommand = gitJiraBranch.pipe(
-  Command.withSubcommands([createCommand, openCommand, infoCommand]),
+  Command.withSubcommands([
+    createCommand,
+    openCommand,
+    infoCommand,
+    listCommand,
+  ]),
 );
 
 const cli = {
