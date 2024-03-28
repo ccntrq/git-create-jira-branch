@@ -50,7 +50,7 @@
     "@biomejs/biome": "^1.6.3",
     "@commitlint/cli": "^19.2.0",
     "@commitlint/config-conventional": "^19.1.0",
-    "@effect/vitest": "^0.2.2",
+    "@effect/vitest": "^0.2.3",
     "@tsconfig/node20": "^20.1.4",
     "@types/node": "^20.11.30",
     "@vitest/coverage-v8": "^1.4.0",
